@@ -6,6 +6,8 @@ from pathlib import Path
 
 import requests
 
+from .exceptions import InvalidConfig
+
 THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -22,14 +24,22 @@ class APIClient:
     logout_uri = 'logout'
     refresh_token_uri = 'refresh_token'
 
-    def __init__(self):
-        _, _, self.os_user, *_ = os.getcwd().split('/')  # Get the actual OS user
-        self.path = '/home/%s/.waisse' % self.os_user
-        self.session_folder = Path(self.path)
-        self.credentials_file = self.session_folder / 'storage'
-        self.config = json.loads(
-            open(os.path.join(THIS_FOLDER, '..', 'config.json'), 'rb').read().decode()
-        )
+    def __init__(self, config):
+        # Get the actual OS user - Linux only
+        _, _, os_user, *_ = os.getcwd().split('/')
+
+        # Build the paths to storage folder where credentials will be stored
+        self.storage = Path(f'/home/{os_user}/.waisse')
+        self.credentials_file = self.storage / 'creds'
+
+        # Grab the configuration file to init the client
+        self.config_path = Path(config)
+        try:
+            self.config = json.loads(self.config_path.open('rb').read().decode())
+        except json.decoder.JSONDecodeError as exc:
+            raise InvalidConfig(exc)
+
+        # API url building
         self.version = self.config['version']
         self.endpoints = self.config['endpoints']
         self.subdomain = self.config['subdomain']
@@ -105,8 +115,8 @@ class APIClient:
                 self._create_dynamic_method(uri, method, aliases, authorization, payload_required)
 
     def check_session(self):
-        if not self.session_folder.exists():
-            os.makedirs(self.path)
+        if not self.storage.exists():
+            os.makedirs(self.storage)
 
         if not self.credentials_file.exists():
             self.credentials_file.touch()
