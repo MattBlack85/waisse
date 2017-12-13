@@ -1,0 +1,45 @@
+{
+  "protocol": "https",
+  "domain": "example.com",
+  "subdomain": "api",
+  "version": 1,
+  "endpoints": [
+    {
+      "uri": "login",
+      "methods": ["post"],
+      "aliases": {"post": "login_user"},
+      "authorization": false
+    },
+    {
+      "uri": "me",
+      "methods": ["get"],
+      "aliases": {"get": "get_profile"},
+      "authorization": true,
+      "payload": {"get": false}
+    },
+    {
+      "uri": "pets",
+      "methods": ["get", "post"],
+      "authorization": true,
+      "payload": {
+	"get": false,
+	"post": true
+      }
+    },
+    {
+      "uri": "pets/<pet_id>",
+      "methods": ["get", "put", "delete"],
+      "aliases": {
+	"get": "get_pet",
+	"put": "modify_pet",
+	"delete": "delete_pet"
+      },
+      "authorization": true,
+      "payload": {
+	"get": false,
+	"put": true,
+	"delete": false
+      }
+    }
+  ]
+}
